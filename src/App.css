@@ -1,3 +1,35 @@
+:root {
+  --bg: #f0f2f5;
+  --surface: white;
+  --text: #1a1a1a;
+  --text-muted: #999;
+  --text-dim: #bbb;
+  --text-mid: #555;
+  --border: #e5e7eb;
+  --border-light: #d1d5db;
+  --hover: rgba(0, 0, 0, 0.06);
+  --weekend-bg: #FEFCE8;
+  --race-week-bg: #E0F2FE;
+  --dialog-bg: white;
+  --input-bg: transparent;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --text: #e0e0e0;
+  --text-muted: #777;
+  --text-dim: #555;
+  --text-mid: #aaa;
+  --border: #2a2a4a;
+  --border-light: #3a3a5a;
+  --hover: rgba(255, 255, 255, 0.06);
+  --weekend-bg: #2a2a1e;
+  --race-week-bg: #1a2a3e;
+  --dialog-bg: #1e2a4a;
+  --input-bg: #0f1a30;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,8 +38,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f0f2f5;
-  color: #1a1a1a;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .app {
@@ -22,7 +54,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #f0f2f5;
+  background: var(--bg);
   padding-bottom: 4px;
 }
 
@@ -31,7 +63,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: white;
+  background: var(--surface);
   border-radius: 10px;
   padding: 10px 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -68,12 +100,12 @@ body {
 
 .year-nav button {
   background: none;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-light);
   border-radius: 6px;
   padding: 2px 10px;
   cursor: pointer;
   font-size: 18px;
-  color: #555;
+  color: var(--text-mid);
   line-height: 1;
 }
 
@@ -139,7 +171,7 @@ body {
   font-size: 12px;
   outline: none;
   background: transparent;
-  color: #555;
+  color: var(--text-mid);
 }
 
 .add-race-inline input:focus {
@@ -148,19 +180,19 @@ body {
 }
 
 .add-race-inline input::placeholder {
-  color: #bbb;
+  color: var(--text-dim);
 }
 
 .stats {
   font-size: 12px;
-  color: #888;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
 .btn-outline {
   background: none;
-  border: 1px solid #d1d5db;
-  color: #555;
+  border: 1px solid var(--border-light);
+  color: var(--text-mid);
   font-size: 12px;
   cursor: pointer;
   padding: 4px 10px;
@@ -190,7 +222,7 @@ body {
 /* ---- Continuous Calendar ---- */
 
 .calendar-continuous {
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -200,7 +232,7 @@ body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
-  background: white;
+  background: var(--surface);
   border-radius: 0 0 10px 10px;
   padding: 4px 16px 6px;
 }
@@ -209,13 +241,13 @@ body {
   text-align: center;
   font-size: 11px;
   font-weight: 600;
-  color: #bbb;
+  color: var(--text-dim);
   padding: 6px 0;
   text-transform: uppercase;
 }
 
 .cal-header.wkend-hdr {
-  color: #555;
+  color: var(--text-mid);
 }
 
 .cal-grid {
@@ -231,8 +263,8 @@ body {
   padding: 12px 4px 4px;
   font-size: 15px;
   font-weight: 800;
-  color: #333;
-  border-top: 2px solid #e5e7eb;
+  color: var(--text);
+  border-top: 2px solid var(--border);
   margin-top: 4px;
 }
 
@@ -271,7 +303,7 @@ body {
 .week-gap {
   font-size: 10px;
   font-weight: 500;
-  color: #999;
+  color: var(--text-muted);
   white-space: nowrap;
   padding-right: 4px;
 }
@@ -295,7 +327,7 @@ body {
 }
 
 .day-cell:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--hover);
 }
 
 .day-cell.empty {
@@ -320,11 +352,11 @@ body {
 
 /* Weekend: Sat, Sun */
 .day-cell.weekend {
-  background: #FEFCE8;
+  background: var(--weekend-bg);
 }
 
 .day-cell.weekend .day-num {
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 /* Holiday — red number */
@@ -341,7 +373,7 @@ body {
 
 /* Race week (distinct tint on all days in weeks with a race) */
 .day-cell.race-week {
-  background: #E0F2FE;
+  background: var(--race-week-bg);
 }
 
 /* Race day (strong highlight) */
@@ -367,7 +399,7 @@ body {
   gap: 16px;
   margin-top: 12px;
   font-size: 11px;
-  color: #999;
+  color: var(--text-muted);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -387,7 +419,7 @@ body {
 }
 
 .wkend-box {
-  background: #FEFCE8;
+  background: var(--weekend-bg);
 }
 
 .race-box {
@@ -395,7 +427,7 @@ body {
 }
 
 .race-week-box {
-  background: #E0F2FE;
+  background: var(--race-week-bg);
   border-color: #7DD3FC;
 }
 
@@ -412,7 +444,7 @@ body {
 }
 
 .dialog {
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
   padding: 16px 20px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -430,21 +462,21 @@ body {
 .dialog-date {
   font-size: 15px;
   font-weight: 700;
-  color: #333;
+  color: var(--text);
 }
 
 .dialog-close {
   background: none;
   border: none;
   font-size: 20px;
-  color: #999;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
 }
 
 .dialog-close:hover {
-  color: #333;
+  color: var(--text);
 }
 
 .dialog-current {
@@ -482,7 +514,7 @@ body {
 .dialog-label {
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
@@ -499,9 +531,9 @@ body {
   align-items: center;
   gap: 8px;
   padding: 5px 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
+  background: var(--surface);
   font-size: 13px;
   font-weight: 500;
   transition: all 0.1s;
@@ -534,19 +566,19 @@ body {
 
 .day-btn {
   padding: 3px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-light);
   border-radius: 5px;
-  background: white;
+  background: var(--surface);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  color: #555;
+  color: var(--text-mid);
   transition: all 0.1s;
 }
 
 .day-btn:hover:not(:disabled) {
   background: #f0f0f0;
-  border-color: #999;
+  border-color: var(--text-muted);
 }
 
 .day-btn:disabled {
@@ -569,7 +601,7 @@ body {
 .dialog-new-race input {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-light);
   border-radius: 6px;
   font-size: 13px;
   outline: none;
@@ -577,4 +609,79 @@ body {
 
 .dialog-new-race input:focus {
   border-color: #3B82F6;
+}
+
+/* ---- Dark mode overrides ---- */
+[data-theme="dark"] .btn-outline:hover,
+[data-theme="dark"] .year-nav button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .btn-danger {
+  border-color: #7f1d1d;
+  color: #f87171;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+  background: rgba(220, 38, 38, 0.15);
+}
+
+[data-theme="dark"] .dialog {
+  background: var(--dialog-bg);
+}
+
+[data-theme="dark"] .dialog-current {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .dialog-race-row {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .dialog-race-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .dialog-race-row.current {
+  background: rgba(79, 70, 229, 0.15);
+}
+
+[data-theme="dark"] .day-btn {
+  background: var(--surface);
+  color: var(--text-mid);
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] .day-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dialog-new-race input {
+  background: var(--input-bg);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] .add-race-inline input {
+  color: var(--text-mid);
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] .legend-box {
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .race-week-box {
+  border-color: #2a4a6a;
+}
+
+[data-theme="dark"] .day-cell.weekend .day-num {
+  color: var(--text);
+}
+
+[data-theme="dark"] .box-shadow,
+[data-theme="dark"] .toolbar,
+[data-theme="dark"] .calendar-continuous {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }

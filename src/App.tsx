@@ -54,6 +54,12 @@ function App() {
   const [dialogDate, setDialogDate] = useState<string | null>(null);
   const [dialogNewName, setDialogNewName] = useState('');
   const dialogInputRef = useRef<HTMLInputElement>(null);
+  const [dark, setDark] = useState(() => localStorage.getItem('race-cal-dark') === '1');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('race-cal-dark', dark ? '1' : '0');
+  }, [dark]);
 
   const historyRef = useRef<string[]>([]);
 
@@ -270,6 +276,7 @@ function App() {
         </div>
         <div className="toolbar-right">
           <span className="stats">{state.races.length} races &middot; {totalRaceWeekends} weekends</span>
+          <button className="btn-outline" onClick={() => setDark(d => !d)} title="Toggle dark mode">{dark ? 'Light' : 'Dark'}</button>
           <button className="btn-outline" onClick={exportState} title="Copy state to clipboard">Export</button>
           <button className="btn-outline" onClick={importState} title="Import state from clipboard">Import</button>
           <button className="btn-outline" onClick={undo} title="Undo (Ctrl+Z)">Undo</button>
