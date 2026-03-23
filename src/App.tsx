@@ -331,7 +331,7 @@ function App() {
                     </div>
                   )}
                   {weekRaces.length > 0 && (
-                    <div className="week-race-row" style={{ paddingLeft: `${(firstRaceCol / 7) * 100}%` }}>
+                    <div className="week-race-row">
                       <div className="week-race-label">
                         {weekRaces.map(race => (
                           <span key={race} className="week-race-tag" style={{ backgroundColor: getColor(race) }}>
