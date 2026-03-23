@@ -312,9 +312,13 @@ function App() {
               );
 
               const weekRaces: string[] = [];
-              for (const day of week) {
-                const race = state.racedays[formatDate(day)];
-                if (race && !weekRaces.includes(race)) weekRaces.push(race);
+              let firstRaceCol = 7; // Mon=0 index in grid
+              for (let i = 0; i < week.length; i++) {
+                const race = state.racedays[formatDate(week[i])];
+                if (race) {
+                  if (!weekRaces.includes(race)) weekRaces.push(race);
+                  if (i < firstRaceCol) firstRaceCol = i;
+                }
               }
 
               const gap = raceGaps.get(weekIdx);
@@ -327,7 +331,7 @@ function App() {
                     </div>
                   )}
                   {weekRaces.length > 0 && (
-                    <div className="week-race-row">
+                    <div className="week-race-row" style={{ paddingLeft: `${(firstRaceCol / 7) * 100}%` }}>
                       <div className="week-race-label">
                         {weekRaces.map(race => (
                           <span key={race} className="week-race-tag" style={{ backgroundColor: getColor(race) }}>
