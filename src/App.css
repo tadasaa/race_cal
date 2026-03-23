@@ -15,19 +15,19 @@
 }
 
 [data-theme="dark"] {
-  --bg: #1a1a2e;
-  --surface: #16213e;
-  --text: #e0e0e0;
-  --text-muted: #777;
-  --text-dim: #555;
-  --text-mid: #aaa;
-  --border: #2a2a4a;
-  --border-light: #3a3a5a;
-  --hover: rgba(255, 255, 255, 0.06);
-  --weekend-bg: #2a2a1e;
-  --race-week-bg: #1a2a3e;
-  --dialog-bg: #1e2a4a;
-  --input-bg: #0f1a30;
+  --bg: #2c2c2c;
+  --surface: #383838;
+  --text: #eaeaea;
+  --text-muted: #999;
+  --text-dim: #777;
+  --text-mid: #bbb;
+  --border: #4a4a4a;
+  --border-light: #555;
+  --hover: rgba(255, 255, 255, 0.08);
+  --weekend-bg: #3d3828;
+  --race-week-bg: #2e3a48;
+  --dialog-bg: #3a3a3a;
+  --input-bg: #333;
 }
 
 * {
