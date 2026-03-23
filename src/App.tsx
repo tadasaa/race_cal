@@ -332,18 +332,18 @@ function App() {
                   )}
                   {weekRaces.length > 0 && (
                     <div className="week-race-row">
-                      <div className="week-race-label">
+                      <div className="week-race-inner" style={{ gridColumn: `${firstRaceCol + 1} / -1` }}>
                         {weekRaces.map(race => (
                           <span key={race} className="week-race-tag" style={{ backgroundColor: getColor(race) }}>
                             {race}
                           </span>
                         ))}
+                        {gap !== undefined && (
+                          <span className={`week-gap ${gap <= 1 ? 'week-gap-tight' : ''}`}>
+                            {gap === 0 ? 'back to back' : gap === 1 ? '1 week since last' : `${gap} weeks since last`}
+                          </span>
+                        )}
                       </div>
-                      {gap !== undefined && (
-                        <span className={`week-gap ${gap <= 1 ? 'week-gap-tight' : ''}`}>
-                          {gap === 0 ? 'back to back' : gap === 1 ? '1 week since last' : `${gap} weeks since last`}
-                        </span>
-                      )}
                     </div>
                   )}
                   {week.map(day => {

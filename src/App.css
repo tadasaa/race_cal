@@ -242,19 +242,19 @@ body {
   padding-top: 4px;
 }
 
-/* Week race row (label + gap counter) */
+/* Week race row (7-col sub-grid matching parent) */
 .week-race-row {
   grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
   padding: 2px 0;
 }
 
-.week-race-label {
+.week-race-inner {
   display: flex;
-  gap: 4px;
-  margin-left: auto;
+  align-items: center;
+  gap: 6px;
 }
 
 .week-race-tag {
