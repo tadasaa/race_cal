@@ -174,6 +174,27 @@ function App() {
     setState(s => ({ ...s, racedays: {} }));
   };
 
+  const exportState = () => {
+    const json = JSON.stringify(state);
+    navigator.clipboard.writeText(json).then(() => alert('Copied to clipboard!'));
+  };
+
+  const importState = () => {
+    const input = prompt('Paste exported state:');
+    if (!input) return;
+    try {
+      const parsed = JSON.parse(input);
+      if (parsed.races && parsed.racedays) {
+        pushHistory();
+        setState({ ...defaultState, ...parsed });
+      } else {
+        alert('Invalid format');
+      }
+    } catch {
+      alert('Invalid JSON');
+    }
+  };
+
   const todayStr = formatDate(new Date());
 
   const raceDayCounts = useMemo(() => {
@@ -254,6 +275,8 @@ function App() {
         </div>
         <div className="toolbar-right">
           <span className="stats">{state.races.length} races &middot; {totalRaceWeekends} weekends</span>
+          <button className="btn-outline" onClick={exportState} title="Copy state to clipboard">Export</button>
+          <button className="btn-outline" onClick={importState} title="Import state from clipboard">Import</button>
           <button className="btn-outline" onClick={undo} title="Undo (Ctrl+Z)">Undo</button>
           <button className="btn-danger" onClick={clearAll}>Clear all</button>
         </div>
