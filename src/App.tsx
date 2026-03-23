@@ -1,10 +1,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import { isLithuanianHoliday, getHolidayName, formatDate } from './holidays';
 
-const RACE_COLORS = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
-  '#EC4899', '#06B6D4', '#F97316', '#6366F1', '#14B8A6',
-];
+const RACE_COLOR = '#4F46E5';
 
 const STORAGE_KEY = 'race-calendar-v1';
 const DAY_NAMES = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -102,10 +99,7 @@ function App() {
     }
   }, [dialogDate]);
 
-  const getColor = (name: string) => {
-    const idx = state.races.indexOf(name);
-    return RACE_COLORS[idx >= 0 ? idx % RACE_COLORS.length : 0];
-  };
+  const getColor = (_name: string) => RACE_COLOR;
 
   const raceWeekMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -242,6 +236,7 @@ function App() {
 
   return (
     <div className="app">
+      <div className="sticky-top">
       <div className="toolbar">
         <div className="toolbar-left">
           <div className="year-nav">
@@ -282,11 +277,14 @@ function App() {
         </div>
       </div>
 
+      <div className="cal-header-row">
+        {DAY_NAMES.map((d, i) => (
+          <div key={i} className={`cal-header ${i >= 5 ? 'wkend-hdr' : ''}`}>{d}</div>
+        ))}
+      </div>
+      </div>
       <div className="calendar-continuous">
         <div className="cal-grid">
-          {DAY_NAMES.map((d, i) => (
-            <div key={i} className={`cal-header ${i >= 5 ? 'wkend-hdr' : ''}`}>{d}</div>
-          ))}
           {(() => {
             // Pre-compute which week indices are race weeks
             const raceWeekIndices = new Set<number>();

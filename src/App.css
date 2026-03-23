@@ -18,6 +18,14 @@ body {
 
 /* ---- Toolbar ---- */
 
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f0f2f5;
+  padding-bottom: 4px;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -26,12 +34,8 @@ body {
   background: white;
   border-radius: 10px;
   padding: 10px 16px;
-  margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   flex-wrap: wrap;
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .toolbar-left {
@@ -192,11 +196,13 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.cal-grid {
+.cal-header-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
-  user-select: none;
+  background: white;
+  border-radius: 0 0 10px 10px;
+  padding: 4px 16px 6px;
 }
 
 .cal-header {
@@ -204,16 +210,19 @@ body {
   font-size: 11px;
   font-weight: 600;
   color: #bbb;
-  padding: 4px 0 8px;
+  padding: 6px 0;
   text-transform: uppercase;
-  position: sticky;
-  top: 50px;
-  background: white;
-  z-index: 5;
 }
 
 .cal-header.wkend-hdr {
-  color: #D97706;
+  color: #555;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  user-select: none;
 }
 
 /* Month divider row */
@@ -311,11 +320,11 @@ body {
 
 /* Weekend: Sat, Sun */
 .day-cell.weekend {
-  background: #FFFBEB;
+  background: #FEFCE8;
 }
 
 .day-cell.weekend .day-num {
-  color: #B45309;
+  color: #1a1a1a;
 }
 
 /* Holiday — red number */
@@ -378,11 +387,11 @@ body {
 }
 
 .wkend-box {
-  background: #FFFBEB;
+  background: #FEFCE8;
 }
 
 .race-box {
-  background: #3B82F6;
+  background: #4F46E5;
 }
 
 .race-week-box {
