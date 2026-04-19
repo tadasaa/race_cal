@@ -163,6 +163,25 @@ body {
   opacity: 1;
 }
 
+.pill-concert {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.35;
+  cursor: pointer;
+  filter: grayscale(1);
+  transition: opacity 0.12s, filter 0.12s;
+}
+
+.pill-concert:hover {
+  opacity: 0.85;
+  filter: grayscale(0.2);
+}
+
+.pill-concert.on {
+  opacity: 1;
+  filter: none;
+}
+
 .add-race-inline input {
   width: 120px;
   padding: 4px 8px;
@@ -381,13 +400,28 @@ body {
   background: var(--day-race-color);
 }
 
-.day-cell.has-race .day-num {
+.day-cell.has-concert {
+  background: var(--day-concert-color);
+}
+
+/* Day with both a race and a concert — split vertically. */
+.day-cell.has-both {
+  background: linear-gradient(90deg,
+    var(--day-race-color) 0 50%,
+    var(--day-concert-color) 50% 100%);
+}
+
+.day-cell.has-race .day-num,
+.day-cell.has-concert .day-num,
+.day-cell.has-both .day-num {
   color: white;
   font-weight: 700;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
 }
 
-.day-cell.has-race:hover {
+.day-cell.has-race:hover,
+.day-cell.has-concert:hover,
+.day-cell.has-both:hover {
   opacity: 0.85;
 }
 
@@ -424,6 +458,10 @@ body {
 
 .race-box {
   background: #4F46E5;
+}
+
+.concert-box {
+  background: #EC4899;
 }
 
 .race-week-box {
@@ -591,6 +629,33 @@ body {
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.concert-toggle {
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+
+.concert-toggle:hover {
+  opacity: 0.85;
+}
+
+.concert-toggle.active {
+  opacity: 1;
+  background: rgba(236, 72, 153, 0.12);
+  border-color: #EC4899;
+}
+
+[data-theme="dark"] .concert-toggle.active {
+  background: rgba(236, 72, 153, 0.22);
 }
 
 .dialog-new-race {

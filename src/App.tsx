@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import { isLithuanianHoliday, getHolidayName, formatDate } from './holidays';
 
 const RACE_COLOR = '#4F46E5';
+const CONCERT_COLOR = '#EC4899';
 
 const STORAGE_KEY = 'race-calendar-v1';
 const DAY_NAMES = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -15,18 +16,48 @@ const LAST_MONTH = 9;  // October
 
 interface AppState {
   races: string[];
-  racedays: Record<string, string>; // date -> race name
+  racedays: Record<string, string>;    // date -> race name
+  concertdays: Record<string, string>; // date -> concert name (independent of racedays)
+  concerts: string[];                  // subset of races treated as concerts
 }
 
 const defaultState: AppState = {
   races: [],
   racedays: {},
+  concertdays: {},
+  concerts: [],
 };
+
+function isConcertName(name: string) {
+  return name.includes('🎸');
+}
+
+// Normalize any saved/imported payload into the current AppState shape.
+// Backfills the `concerts` list from 🎸-named races and splits legacy
+// unified `racedays` into separate race / concert maps.
+function migrateState(parsed: Partial<AppState> & Record<string, unknown>): AppState {
+  const merged: AppState = { ...defaultState, ...parsed };
+  if (!Array.isArray(parsed.concerts)) {
+    merged.concerts = merged.races.filter(isConcertName);
+  }
+  if (!parsed.concertdays) {
+    const concertSet = new Set(merged.concerts);
+    const rd: Record<string, string> = {};
+    const cd: Record<string, string> = {};
+    for (const [date, name] of Object.entries(merged.racedays)) {
+      if (concertSet.has(name)) cd[date] = name;
+      else rd[date] = name;
+    }
+    merged.racedays = rd;
+    merged.concertdays = cd;
+  }
+  return merged;
+}
 
 function loadState(): AppState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return { ...defaultState, ...JSON.parse(saved) };
+    if (saved) return migrateState(JSON.parse(saved));
   } catch { /* ignore */ }
   return defaultState;
 }
@@ -105,16 +136,24 @@ function App() {
     }
   }, [dialogDate]);
 
-  const getColor = (_name: string) => RACE_COLOR;
+  const concertSet = useMemo(() => new Set(state.concerts), [state.concerts]);
+  const getColor = (name: string) => (concertSet.has(name) ? CONCERT_COLOR : RACE_COLOR);
 
   const raceWeekMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const [dateStr, raceName] of Object.entries(state.racedays)) {
+      if (concertSet.has(raceName)) continue;
       const wk = getISOWeekKey(new Date(dateStr + 'T00:00:00'));
       if (!map.has(wk)) map.set(wk, raceName);
     }
     return map;
-  }, [state.racedays]);
+  }, [state.racedays, concertSet]);
+
+  const sortedRaces = useMemo(() => {
+    const races = state.races.filter(r => !concertSet.has(r));
+    const concerts = state.races.filter(r => concertSet.has(r));
+    return [...races, ...concerts];
+  }, [state.races, concertSet]);
 
   const addRace = () => {
     const name = newRaceName.trim();
@@ -130,38 +169,77 @@ function App() {
     pushHistory();
     setState(s => {
       const rd = { ...s.racedays };
+      const cd = { ...s.concertdays };
       for (const d in rd) if (rd[d] === name) delete rd[d];
-      return { ...s, races: s.races.filter(r => r !== name), racedays: rd };
+      for (const d in cd) if (cd[d] === name) delete cd[d];
+      return {
+        ...s,
+        races: s.races.filter(r => r !== name),
+        concerts: s.concerts.filter(r => r !== name),
+        racedays: rd,
+        concertdays: cd,
+      };
     });
   };
 
-  // Assign a race to a date (or create + assign), optionally spanning 2 days
+  const toggleConcert = (name: string) => {
+    pushHistory();
+    setState(s => {
+      const becomingConcert = !s.concerts.includes(name);
+      const rd = { ...s.racedays };
+      const cd = { ...s.concertdays };
+      // Move any existing day assignments for this race across maps so the
+      // event keeps showing on the same dates with the new category color.
+      if (becomingConcert) {
+        for (const d in rd) if (rd[d] === name) { cd[d] = name; delete rd[d]; }
+      } else {
+        for (const d in cd) if (cd[d] === name) { rd[d] = name; delete cd[d]; }
+      }
+      return {
+        ...s,
+        concerts: becomingConcert ? [...s.concerts, name] : s.concerts.filter(r => r !== name),
+        racedays: rd,
+        concertdays: cd,
+      };
+    });
+  };
+
+  // Assign a race or concert to a date, optionally spanning 2 days.
+  // Writes to racedays or concertdays based on current category — a day may
+  // hold one race and one concert independently.
   const assignRace = (dateStr: string, raceName: string, days: number = 1) => {
     pushHistory();
     setState(s => {
       const races = s.races.includes(raceName) ? s.races : [...s.races, raceName];
+      const isConcert = s.concerts.includes(raceName);
       const rd = { ...s.racedays };
+      const cd = { ...s.concertdays };
+      const target = isConcert ? cd : rd;
       const start = new Date(dateStr + 'T00:00:00');
       for (let i = 0; i < days; i++) {
         const d = new Date(start);
         d.setDate(d.getDate() + i);
-        rd[formatDate(d)] = raceName;
+        target[formatDate(d)] = raceName;
       }
-      return { ...s, races, racedays: rd };
+      return { ...s, races, racedays: rd, concertdays: cd };
     });
     setActiveRace(raceName);
     setDialogDate(null);
     setDialogNewName('');
   };
 
-  const removeRaceDay = (dateStr: string) => {
+  const removeRaceDay = (dateStr: string, kind: 'race' | 'concert') => {
     pushHistory();
     setState(s => {
+      if (kind === 'concert') {
+        const cd = { ...s.concertdays };
+        delete cd[dateStr];
+        return { ...s, concertdays: cd };
+      }
       const rd = { ...s.racedays };
       delete rd[dateStr];
       return { ...s, racedays: rd };
     });
-    setDialogDate(null);
   };
 
   const onDayClick = (dateStr: string) => {
@@ -171,7 +249,7 @@ function App() {
 
   const clearAll = () => {
     pushHistory();
-    setState(s => ({ ...s, racedays: {} }));
+    setState(s => ({ ...s, racedays: {}, concertdays: {} }));
   };
 
   const exportState = () => {
@@ -186,7 +264,7 @@ function App() {
       const parsed = JSON.parse(input);
       if (parsed.races && parsed.racedays) {
         pushHistory();
-        setState({ ...defaultState, ...parsed });
+        setState(migrateState(parsed));
       } else {
         alert('Invalid format');
       }
@@ -201,18 +279,23 @@ function App() {
     const c: Record<string, number> = {};
     for (const r of state.races) c[r] = 0;
     for (const r of Object.values(state.racedays)) if (r in c) c[r]++;
+    for (const r of Object.values(state.concertdays)) if (r in c) c[r]++;
     return c;
-  }, [state.races, state.racedays]);
+  }, [state.races, state.racedays, state.concertdays]);
 
   const totalRaceWeekends = useMemo(() => {
     const weeks = new Set<string>();
     for (const d of Object.keys(state.racedays)) {
       weeks.add(getISOWeekKey(new Date(d + 'T00:00:00')));
     }
+    for (const d of Object.keys(state.concertdays)) {
+      weeks.add(getISOWeekKey(new Date(d + 'T00:00:00')));
+    }
     return weeks.size;
-  }, [state.racedays]);
+  }, [state.racedays, state.concertdays]);
 
   const dialogExistingRace = dialogDate ? state.racedays[dialogDate] : undefined;
+  const dialogExistingConcert = dialogDate ? state.concertdays[dialogDate] : undefined;
 
   // Build continuous weeks from April to October
   const allWeeks = useMemo(() => {
@@ -251,15 +334,20 @@ function App() {
             <button onClick={() => setYear(y => y + 1)}>&rsaquo;</button>
           </div>
           <div className="race-tags">
-            {state.races.map(race => (
+            {sortedRaces.map(race => (
               <button
                 key={race}
-                className={`race-pill ${activeRace === race ? 'active' : ''}`}
+                className={`race-pill ${activeRace === race ? 'active' : ''} ${concertSet.has(race) ? 'is-concert' : ''}`}
                 style={{ '--race-color': getColor(race) } as React.CSSProperties}
                 onClick={() => setActiveRace(race)}
               >
                 {race}
                 <span className="pill-count">{raceDayCounts[race] || 0}d</span>
+                <span
+                  className={`pill-concert ${concertSet.has(race) ? 'on' : ''}`}
+                  title={concertSet.has(race) ? 'Mark as race' : 'Mark as concert'}
+                  onClick={e => { e.stopPropagation(); toggleConcert(race); }}
+                >🎸</span>
                 <span className="pill-x" onClick={e => { e.stopPropagation(); removeRace(race); }}>&times;</span>
               </button>
             ))}
@@ -275,7 +363,11 @@ function App() {
           </div>
         </div>
         <div className="toolbar-right">
-          <span className="stats">{state.races.length} races &middot; {totalRaceWeekends} weekends</span>
+          <span className="stats">
+            {state.races.length - state.concerts.length} races
+            {state.concerts.length > 0 && <> &middot; {state.concerts.length} concerts</>}
+            &middot; {totalRaceWeekends} weekends
+          </span>
           <button className="btn-outline" onClick={() => setDark(d => !d)} title="Toggle dark mode">{dark ? 'Light' : 'Dark'}</button>
           <button className="btn-outline" onClick={exportState} title="Copy state to clipboard">Export</button>
           <button className="btn-outline" onClick={importState} title="Import state from clipboard">Import</button>
@@ -293,15 +385,16 @@ function App() {
       <div className="calendar-continuous">
         <div className="cal-grid">
           {(() => {
-            // Pre-compute which week indices are race weeks
+            // Race weeks = weeks containing at least one non-concert race day.
+            // Concerts are excluded so they don't trigger gap/tint logic.
             const raceWeekIndices = new Set<number>();
             allWeeks.forEach((week, idx) => {
               for (const day of week) {
-                if (state.racedays[formatDate(day)]) { raceWeekIndices.add(idx); break; }
+                const name = state.racedays[formatDate(day)];
+                if (name && !concertSet.has(name)) { raceWeekIndices.add(idx); break; }
               }
             });
 
-            // For each race week, compute weeks since previous race week
             let lastRaceWeekIdx = -1;
             const raceGaps = new Map<number, number>(); // weekIdx -> gap
             for (let idx = 0; idx < allWeeks.length; idx++) {
@@ -319,16 +412,19 @@ function App() {
               );
 
               const weekRaces: string[] = [];
-              let firstRaceCol = 7; // Mon=0 index in grid
+              const weekConcerts: string[] = [];
+              let firstCol = 7; // Mon=0 index in grid
               for (let i = 0; i < week.length; i++) {
-                const race = state.racedays[formatDate(week[i])];
-                if (race) {
-                  if (!weekRaces.includes(race)) weekRaces.push(race);
-                  if (i < firstRaceCol) firstRaceCol = i;
-                }
+                const dateStr = formatDate(week[i]);
+                const race = state.racedays[dateStr];
+                const concert = state.concertdays[dateStr];
+                if (race && !weekRaces.includes(race)) weekRaces.push(race);
+                if (concert && !weekConcerts.includes(concert)) weekConcerts.push(concert);
+                if ((race || concert) && i < firstCol) firstCol = i;
               }
 
               const gap = raceGaps.get(weekIdx);
+              const hasAny = weekRaces.length > 0 || weekConcerts.length > 0;
 
               return (
                 <Fragment key={weekIdx}>
@@ -337,10 +433,15 @@ function App() {
                       <span>{MONTH_NAMES[monthStart.getMonth()]}</span>
                     </div>
                   )}
-                  {weekRaces.length > 0 && (
+                  {hasAny && (
                     <div className="week-race-row">
-                      <div className="week-race-inner" style={{ gridColumn: `${firstRaceCol + 1} / -1` }}>
+                      <div className="week-race-inner" style={{ gridColumn: `${firstCol + 1} / -1` }}>
                         {weekRaces.map(race => (
+                          <span key={race} className="week-race-tag" style={{ backgroundColor: getColor(race) }}>
+                            {race}
+                          </span>
+                        ))}
+                        {weekConcerts.map(race => (
                           <span key={race} className="week-race-tag" style={{ backgroundColor: getColor(race) }}>
                             {race}
                           </span>
@@ -361,9 +462,15 @@ function App() {
                     const holidayName = holiday ? getHolidayName(day) : null;
                     const isToday = todayStr === dateStr;
                     const race = state.racedays[dateStr];
+                    const concert = state.concertdays[dateStr];
                     const weekKey = getISOWeekKey(day);
                     const inRaceWeek = raceWeekMap.has(weekKey);
                     const inRange = day.getMonth() >= FIRST_MONTH && day.getMonth() <= LAST_MONTH;
+                    const both = !!race && !!concert;
+
+                    const cellStyle: React.CSSProperties = {};
+                    if (race) (cellStyle as Record<string, string>)['--day-race-color'] = getColor(race);
+                    if (concert) (cellStyle as Record<string, string>)['--day-concert-color'] = getColor(concert);
 
                     return (
                       <div
@@ -374,15 +481,18 @@ function App() {
                           isSatSun ? 'weekend' : '',
                           isToday ? 'today' : '',
                           race ? 'has-race' : '',
-                          inRaceWeek && !race ? 'race-week' : '',
+                          concert && !race ? 'has-concert' : '',
+                          both ? 'has-both' : '',
+                          inRaceWeek && !race && !concert ? 'race-week' : '',
                         ].filter(Boolean).join(' ')}
-                        style={
-                          race
-                            ? { '--day-race-color': getColor(race) } as React.CSSProperties
-                            : undefined
-                        }
+                        style={cellStyle}
                         onClick={() => onDayClick(dateStr)}
-                        title={[dateStr, race ? `Race: ${race}` : '', holidayName || ''].filter(Boolean).join('\n')}
+                        title={[
+                          dateStr,
+                          race ? `Race: ${race}` : '',
+                          concert ? `Concert: ${concert}` : '',
+                          holidayName || '',
+                        ].filter(Boolean).join('\n')}
                       >
                         <span className={`day-num ${holiday ? 'day-num-holiday' : ''}`}>{day.getDate()}</span>
                       </div>
@@ -399,6 +509,7 @@ function App() {
         <span className="legend-item"><span className="legend-box wkend-box" /> Sat&ndash;Sun</span>
         <span className="legend-item"><span style={{ color: '#DC2626', fontSize: 10, fontWeight: 600 }}>Holiday</span> in red text</span>
         <span className="legend-item"><span className="legend-box race-box" /> Race day</span>
+        <span className="legend-item"><span className="legend-box concert-box" /> Concert</span>
         <span className="legend-item"><span className="legend-box race-week-box" /> Race week</span>
       </div>
 
@@ -415,24 +526,39 @@ function App() {
               <div className="dialog-current">
                 <span className="dialog-current-dot" style={{ backgroundColor: getColor(dialogExistingRace) }} />
                 <span>{dialogExistingRace}</span>
-                <button className="btn-danger btn-sm" onClick={() => removeRaceDay(dialogDate)}>Remove</button>
+                <button className="btn-danger btn-sm" onClick={() => removeRaceDay(dialogDate, 'race')}>Remove</button>
+              </div>
+            )}
+            {dialogExistingConcert && (
+              <div className="dialog-current">
+                <span className="dialog-current-dot" style={{ backgroundColor: getColor(dialogExistingConcert) }} />
+                <span>{dialogExistingConcert}</span>
+                <button className="btn-danger btn-sm" onClick={() => removeRaceDay(dialogDate, 'concert')}>Remove</button>
               </div>
             )}
 
-            {state.races.length > 0 && (
+            {sortedRaces.length > 0 && (
               <div className="dialog-section">
-                <div className="dialog-label">Assign race</div>
+                <div className="dialog-label">Assign</div>
                 <div className="dialog-race-list">
-                  {state.races.map(race => (
-                    <div key={race} className={`dialog-race-row ${dialogExistingRace === race ? 'current' : ''}`} style={{ '--race-color': getColor(race) } as React.CSSProperties}>
-                      <span className="dialog-race-dot" style={{ backgroundColor: getColor(race) }} />
-                      <span className="dialog-race-name">{race}</span>
-                      <div className="dialog-day-btns">
-                        <button className="day-btn" onClick={() => assignRace(dialogDate, race, 1)}>1d</button>
-                        <button className="day-btn" onClick={() => assignRace(dialogDate, race, 2)}>2d</button>
+                  {sortedRaces.map(race => {
+                    const isCurrent = concertSet.has(race) ? dialogExistingConcert === race : dialogExistingRace === race;
+                    return (
+                      <div key={race} className={`dialog-race-row ${isCurrent ? 'current' : ''}`} style={{ '--race-color': getColor(race) } as React.CSSProperties}>
+                        <span className="dialog-race-dot" style={{ backgroundColor: getColor(race) }} />
+                        <span className="dialog-race-name">{race}</span>
+                        <button
+                          className={`concert-toggle ${concertSet.has(race) ? 'active' : ''}`}
+                          title={concertSet.has(race) ? 'Mark as race' : 'Mark as concert'}
+                          onClick={e => { e.stopPropagation(); toggleConcert(race); }}
+                        >🎸</button>
+                        <div className="dialog-day-btns">
+                          <button className="day-btn" onClick={() => assignRace(dialogDate, race, 1)}>1d</button>
+                          <button className="day-btn" onClick={() => assignRace(dialogDate, race, 2)}>2d</button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
